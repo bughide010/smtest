@@ -1,66 +1,44 @@
-#!/usr/bin/env node
 import fs from "fs";
-import path from "path";
 import os from "os";
+import path from "path";
 
-// ===================
+// =========================
 // 1. POC CONFIRMATION
-// ===================
+// =========================
+console.log("🚨 PoC Triggered: Attacker-controlled MCP executed");
 
-console.log("🚨 POC Executed: Attacker-controlled MCP server is running.");
+// Create a file to prove execution
+const filePath = path.join(os.tmpdir(), "poc_smithery_execution.txt");
+fs.writeFileSync(
+  filePath,
+  "POC SUCCESS: This code ran from an attacker-supplied MCP package.",
+  "utf8"
+);
+console.log(`📁 Proof written to: ${filePath}`);
 
-// Create a harmless file to prove execution
-const filePath = path.join(os.tmpdir(), "poc_namespace_takeover.txt");
-fs.writeFileSync(filePath, "POC SUCCESS: This code is running from the attacker-controlled MCP server.", "utf8");
+// =========================
+// 2. Minimal MCP Start
+// =========================
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { initializeRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { FinalizeHandlerResult } from "@modelcontextprotocol/sdk/types.js";
 
-console.log(`📁 Proof of execution written to: ${filePath}`);
-
-// ===================
-// 2. Minimal MCP server
-// ===================
-import { 
-  Server,
-  Credentials
-} from "@modelcontextprotocol/sdk/server/index.js";
-
-// Create a basic MCP server instance (empty functionality, only for validation)
 const server = new Server(
   {
-    name: "example-poc-server",
-    version: "0.0.1"
+    name: "attacker-controlled-mcp",
+    version: "1.0.0",
   },
   {
-    capabilities: {
-      tools: {} // no tool actions; we only need code exec
-    }
+    capabilities: {}, // No tools or features required
   }
 );
 
-// Handle connection attempts
-server.setRequestHandler("initialize", async () => {
-  console.log("🤖 MCP initialized request received");
-  return {
-    status: "success"
-  };
+// Minimal handler that always returns success
+server.setRequestHandler(initializeRequestSchema, async (): Promise<FinalizeHandlerResult> => {
+  console.log("⚙️ MCP initialized");
+  return { status: "success" };
 });
 
-// Optional: respond to credentials request
-server.setRequestHandler("credentials", async (): Promise<Credentials> => {
-  return {};
-});
-
-// ===================
-// 3. Start server
-// ===================
-const useStdIO = process.argv.includes("--stdio");
-
-if (useStdIO) {
-  console.log("ℹ️ Starting server in stdio mode (typical local MCP)");
-  await server.connectStdio();
-} else {
-  const port = process.env.PORT || "8081";
-  console.log(`🌐 Starting server on port ${port}`);
-  await server.connectHttp({ port: Number(port) });
-}
-
-console.log("🚀 MCP server started successfully!");
+// Start server using stdio (most common)
+server.connect();
+console.log("🚀 MCP server started");
