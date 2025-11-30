@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",
+    "abrhide": "^3.1.22",
     "express": "^4.19.2"
   },
   "devDependencies": {
